@@ -1,93 +1,96 @@
 <template>
-	<div class="flex flex-col mt-7 items-center gap-12 text-center">
-		<div>
-			<h2 class="text-cyan-500 mt-7 mb-7 text-xl">Врачи</h2>
-			<table>
-				<thead>
-					<tr class="border w-auto">
-						<th class="text-white w-52 text-xl">Имя</th>
-						<th class="text-white w-52 text-xl">Отдел</th>
-						<th class="text-white w-52 text-xl">Менеджер</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr
-						class="border w-auto"
-						v-for="employee in doctors"
-						:key="employee.name"
-					>
-						<td class="border h-10 w-52 text-white text-lg px-1.5">
-							{{ employee.name }}
-						</td>
-						<td class="border h-10 w-52 text-white text-lg px-1.5">
-							{{ employee.department }}
-						</td>
-						<td class="border h-10 text-white w-52 text-lg px-1.5">
-							{{ employee.manager ? '+' : '---' }}
-						</td>
-						<td
-							class="flex h-10 flex-row gap-2 border w-60 items-center px-1.5"
+	<div class="flex flex-col gap-4 items-center">
+		<h2 class="text-2xl text-sky-400">Врачи</h2>
+		<table class="border-2 border-white">
+			<thead>
+				<tr class="w-40 border-2 border-white text-center">
+					<th class="text-sky-700">ID</th>
+					<th class="text-sky-700">Имя</th>
+					<th class="text-sky-700">Отделение</th>
+					<th class="text-sky-700">Действия</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr v-for="doctor in doctors" :key="doctor.id">
+					<td class="text-white w-40 border-2 border-white text-center">
+						{{ doctor.id }}
+					</td>
+					<td class="text-white w-40 border-2 border-white text-center">
+						{{ doctor.name }}
+					</td>
+					<td class="text-white w-40 border-2 border-white text-center">
+						{{ doctor.jobTitle }}
+					</td>
+					<td class="text-white w-40 border-2 border-white text-center">
+						<button
+							@click="edit(doctor)"
+							class="text-green-500 hover:text-green-200"
 						>
-							<button class="text-green-500">Редактировать</button>
-							<p class="text-white">/</p>
-							<button class="text-red-500">Удалить</button>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
-		<form
-			@submit.prevent="addEmployee"
-			class="flex flex-col pt-5 pb-5 gap-2 justify-center items-center bg-gray-900"
+							Изменить
+						</button>
+						<button
+							@click="remove(doctor.id)"
+							class="text-red-500 hover:text-red-200"
+						>
+							Удалить
+						</button>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<button
+			class="bg-gray-400 px-2 text-black rounded-lg hover:opacity-35"
+			@click="addDoctor"
 		>
-			<h2 class="text-white text-2xl">Добавить сотрудника</h2>
-			<my-input />
-			<my-select v-model="newEmployee.jobTitle" />
-			<button type="submit" class="text-yellow-500 bg-gray-600 p-2 rounded">
-				Добавить
-			</button>
-		</form>
+			Добавить врача
+		</button>
 	</div>
 </template>
 
-<script>
-import employeesData from '@/employees'
-import MyInput from './UI/MyInput.vue'
-import MySelect from './UI/MySelect.vue'
+<script lang="ts">
+import { computed, defineComponent } from 'vue'
+import { useEmployeeStore } from '../employeesStore'
+import { Employee } from '../type/type'
 
-export default {
-	components: { MyInput, MySelect },
-	data() {
+export default defineComponent({
+	setup() {
+		const { employees, addEmployee, deleteEmployee } = useEmployeeStore()
+
+		const doctors = computed(() =>
+			employees.value.filter(emp => emp.role === 'doctor')
+		)
+
+		const addDoctor = () => {
+			const newDoctor: Employee = {
+				id: Date.now(),
+				name: prompt('Введите имя врача') || '',
+				role: 'doctor',
+				jobTitle: prompt('Введите отделение') || '',
+				manager: true,
+			}
+			addEmployee(newDoctor)
+		}
+
+		const edit = (doctor: Employee) => {
+			const updatedDoctor: Employee = {
+				...doctor,
+				name: prompt('Введите новое имя врача', doctor.name) || doctor.name,
+				jobTitle:
+					prompt('Введите новое отделение', doctor.jobTitle) || doctor.jobTitle,
+			}
+			addEmployee(updatedDoctor)
+		}
+
+		const remove = (id: number) => {
+			deleteEmployee(id)
+		}
+
 		return {
-			employees: [
-				...employeesData.cardiologicalEmployees,
-				...employeesData.surgicalEmployees,
-			],
-			newEmployee: {
-				name: '',
-				department: '',
-				manager: false,
-				jobTitle: '',
-			},
+			doctors,
+			addDoctor,
+			edit,
+			remove,
 		}
 	},
-	computed: {
-		doctors() {
-			return this.employees.filter(employee => employee.jobTitle === 'Врач')
-		},
-	},
-	methods: {
-		addEmployee() {
-			if (this.newEmployee.name && this.newEmployee.jobTitle) {
-				this.employees.push({ ...this.newEmployee })
-				this.newEmployee.name = ''
-				this.newEmployee.jobTitle = ''
-			} else {
-				alert('Пожалуйста, заполните все поля')
-			}
-		},
-	},
-}
+})
 </script>
-
-<style scoped></style>

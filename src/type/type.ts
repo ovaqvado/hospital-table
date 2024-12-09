@@ -1,8 +1,7 @@
-export type Employee = {
+export interface Employee {
 	name: string
-	department: string
+	role: 'nurse' | 'doctor'
 	jobTitle: string
 	manager: boolean
+	id: number
 }
-
-export type Employees = Employee[]
